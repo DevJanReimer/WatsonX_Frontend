@@ -1,0 +1,97 @@
+"use client";
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import { Bot, User } from "lucide-react";
+import clsx from "clsx";
+
+export type Role = "user" | "assistant" | "system";
+
+export interface Message {
+  id: string;
+  role: Role;
+  content: string;
+  sources?: { title: string; url?: string; snippet?: string }[];
+}
+
+interface Props {
+  message: Message;
+}
+
+export default function ChatMessage({ message }: Props) {
+  const isUser = message.role === "user";
+
+  return (
+    <div
+      className={clsx(
+        "flex gap-3 py-4",
+        isUser ? "flex-row-reverse" : "flex-row"
+      )}
+    >
+      <div
+        className={clsx(
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+          isUser
+            ? "bg-abarxas-600 text-white"
+            : "bg-abarxas-100 text-abarxas-700 border border-abarxas-200"
+        )}
+      >
+        {isUser ? <User size={16} /> : <Bot size={16} />}
+      </div>
+
+      <div
+        className={clsx(
+          "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
+          isUser
+            ? "bg-abarxas-600 text-white rounded-tr-sm"
+            : "bg-white text-abarxas-900 rounded-tl-sm border border-abarxas-100"
+        )}
+      >
+        {isUser ? (
+          <p className="whitespace-pre-wrap leading-relaxed">
+            {message.content}
+          </p>
+        ) : (
+          <div className="prose-chat text-[0.95rem]">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {message.content || "…"}
+            </ReactMarkdown>
+          </div>
+        )}
+
+        {!isUser && message.sources && message.sources.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-abarxas-100">
+            <div className="text-xs font-semibold uppercase tracking-wider text-abarxas-500 mb-2">
+              Sources
+            </div>
+            <ul className="space-y-1">
+              {message.sources.map((s, i) => (
+                <li key={i} className="text-sm">
+                  {s.url ? (
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-abarxas-600 hover:underline"
+                    >
+                      {s.title}
+                    </a>
+                  ) : (
+                    <span className="text-abarxas-700">{s.title}</span>
+                  )}
+                  {s.snippet && (
+                    <span className="text-abarxas-500"> — {s.snippet}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
