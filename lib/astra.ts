@@ -19,10 +19,12 @@ export interface DocumentRecord {
   size: number;
   mimeType: string;
   uploadedAt: string;
+  content: string; // base64-encoded file bytes
   watsonxDocumentId: string | null;
 }
 
-export async function saveDocument(record: DocumentRecord): Promise<void> {
+export async function saveDocuments(records: DocumentRecord[]): Promise<void> {
+  if (records.length === 0) return;
   const collection = getCollection();
-  await collection.insertOne(record);
+  await collection.insertMany(records);
 }

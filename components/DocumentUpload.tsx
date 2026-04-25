@@ -16,7 +16,6 @@ export default function DocumentUpload() {
   const [dragOver, setDragOver] = useState(false);
 
   async function uploadOne(file: File) {
-    setFiles((prev) => [...prev, { name: file.name, status: "uploading" }]);
     const form = new FormData();
     form.append("file", file);
     try {
@@ -26,9 +25,7 @@ export default function DocumentUpload() {
         throw new Error(body.error || `Upload failed (${res.status})`);
       }
       setFiles((prev) =>
-        prev.map((f) =>
-          f.name === file.name ? { ...f, status: "done" } : f
-        )
+        prev.map((f) => f.name === file.name ? { ...f, status: "done" } : f)
       );
     } catch (err: any) {
       setFiles((prev) =>
@@ -43,7 +40,13 @@ export default function DocumentUpload() {
 
   async function handleFiles(list: FileList | null) {
     if (!list) return;
-    for (const file of Array.from(list)) await uploadOne(file);
+    const fileArray = Array.from(list);
+    // Mark all as uploading immediately, then upload in parallel
+    setFiles((prev) => [
+      ...prev,
+      ...fileArray.map((f) => ({ name: f.name, status: "uploading" as const }))
+    ]);
+    await Promise.all(fileArray.map(uploadOne));
   }
 
   return (

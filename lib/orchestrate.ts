@@ -22,6 +22,7 @@ async function fetchIamToken(): Promise<IamToken> {
     process.env.IAM_TOKEN_URL || "https://iam.cloud.ibm.com/identity/token";
   if (!apiKey) throw new Error("IBM_CLOUD_API_KEY is not set");
 
+  console.log(`[orchestrate] fetching IAM token from ${tokenUrl}`);
   const body = new URLSearchParams({
     grant_type: "urn:ibm:params:oauth:grant-type:apikey",
     apikey: apiKey
@@ -35,12 +36,14 @@ async function fetchIamToken(): Promise<IamToken> {
 
   if (!res.ok) {
     const txt = await res.text();
+    console.error(`[orchestrate] IAM token exchange failed: ${res.status} ${txt}`);
     throw new Error(`IAM token exchange failed: ${res.status} ${txt}`);
   }
   const data = (await res.json()) as {
     access_token: string;
     expiration: number; // epoch seconds
   };
+  console.log(`[orchestrate] IAM token obtained, expires ${new Date(data.expiration * 1000).toISOString()}`);
   return { access_token: data.access_token, expires_at: data.expiration };
 }
 
@@ -123,6 +126,7 @@ export async function orchestrateUpload(
     kbId
   )}/documents`;
 
+  console.log(`[orchestrate] uploading ${file.name} to ${url}`);
   const form = new FormData();
   form.append("file", file, file.name);
 
@@ -131,6 +135,7 @@ export async function orchestrateUpload(
     headers: { Authorization: `Bearer ${token}` },
     body: form
   });
+  console.log(`[orchestrate] upload response for ${file.name}: ${res.status}`);
 
   let body: unknown;
   const contentType = res.headers.get("content-type") || "";
