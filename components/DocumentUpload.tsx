@@ -63,18 +63,18 @@ export default function DocumentUpload() {
         className={clsx(
           "border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition",
           dragOver
-            ? "border-abarxas-500 bg-abarxas-50"
-            : "border-abarxas-200 hover:border-abarxas-400 bg-white"
+            ? "border-abraxas-500 bg-abraxas-50"
+            : "border-abraxas-200 hover:border-abraxas-400 bg-white"
         )}
       >
         <Paperclip
-          className="mx-auto mb-2 text-abarxas-500"
+          className="mx-auto mb-2 text-abraxas-500"
           size={22}
         />
-        <div className="text-sm font-medium text-abarxas-800">
+        <div className="text-sm font-medium text-abraxas-800">
           Drop documents or click to upload
         </div>
-        <div className="text-xs text-abarxas-500 mt-1">
+        <div className="text-xs text-abraxas-500 mt-1">
           PDF, DOCX, XLSX, PPTX, TXT · up to 25&nbsp;MB
         </div>
         <input
@@ -95,12 +95,12 @@ export default function DocumentUpload() {
           {files.map((f, i) => (
             <li
               key={`${f.name}-${i}`}
-              className="flex items-center gap-2 text-sm bg-white border border-abarxas-100 rounded-lg px-3 py-2"
+              className="flex items-center gap-2 text-sm bg-white border border-abraxas-100 rounded-lg px-3 py-2"
             >
               {f.status === "uploading" && (
                 <Loader2
                   size={14}
-                  className="animate-spin text-abarxas-500 flex-shrink-0"
+                  className="animate-spin text-abraxas-500 flex-shrink-0"
                 />
               )}
               {f.status === "done" && (
@@ -115,7 +115,7 @@ export default function DocumentUpload() {
                   className="text-red-600 flex-shrink-0"
                 />
               )}
-              <span className="flex-1 truncate text-abarxas-800">
+              <span className="flex-1 truncate text-abraxas-800">
                 {f.name}
               </span>
               {f.status === "error" && f.error && (
@@ -126,7 +126,7 @@ export default function DocumentUpload() {
                 onClick={() =>
                   setFiles((prev) => prev.filter((_, j) => j !== i))
                 }
-                className="text-abarxas-400 hover:text-abarxas-700"
+                className="text-abraxas-400 hover:text-abraxas-700"
                 aria-label="Remove"
               >
                 <X size={14} />

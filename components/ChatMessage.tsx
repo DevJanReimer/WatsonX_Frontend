@@ -33,8 +33,8 @@ export default function ChatMessage({ message }: Props) {
         className={clsx(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
           isUser
-            ? "bg-abarxas-600 text-white"
-            : "bg-abarxas-100 text-abarxas-700 border border-abarxas-200"
+            ? "bg-abraxas-600 text-white"
+            : "bg-abraxas-100 text-abraxas-700 border border-abraxas-200"
         )}
       >
         {isUser ? <User size={16} /> : <Bot size={16} />}
@@ -44,8 +44,8 @@ export default function ChatMessage({ message }: Props) {
         className={clsx(
           "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
           isUser
-            ? "bg-abarxas-600 text-white rounded-tr-sm"
-            : "bg-white text-abarxas-900 rounded-tl-sm border border-abarxas-100"
+            ? "bg-abraxas-600 text-white rounded-tr-sm"
+            : "bg-white text-abraxas-900 rounded-tl-sm border border-abraxas-100"
         )}
       >
         {isUser ? (
@@ -64,8 +64,8 @@ export default function ChatMessage({ message }: Props) {
         )}
 
         {!isUser && message.sources && message.sources.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-abarxas-100">
-            <div className="text-xs font-semibold uppercase tracking-wider text-abarxas-500 mb-2">
+          <div className="mt-3 pt-3 border-t border-abraxas-100">
+            <div className="text-xs font-semibold uppercase tracking-wider text-abraxas-500 mb-2">
               Sources
             </div>
             <ul className="space-y-1">
@@ -76,15 +76,15 @@ export default function ChatMessage({ message }: Props) {
                       href={s.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-abarxas-600 hover:underline"
+                      className="text-abraxas-600 hover:underline"
                     >
                       {s.title}
                     </a>
                   ) : (
-                    <span className="text-abarxas-700">{s.title}</span>
+                    <span className="text-abraxas-700">{s.title}</span>
                   )}
                   {s.snippet && (
-                    <span className="text-abarxas-500"> — {s.snippet}</span>
+                    <span className="text-abraxas-500"> — {s.snippet}</span>
                   )}
                 </li>
               ))}

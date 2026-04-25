@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { orchestrateUpload } from "@/lib/orchestrate";
+import { saveDocument } from "@/lib/astra";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,6 +45,17 @@ export async function POST(req: NextRequest) {
     }
 
     const { status, body } = await orchestrateUpload(file);
+
+    if (status >= 200 && status < 300) {
+      await saveDocument({
+        filename: file.name,
+        size: file.size,
+        mimeType: file.type || "application/octet-stream",
+        uploadedAt: new Date().toISOString(),
+        watsonxDocumentId: (body as any)?.id ?? null
+      });
+    }
+
     return NextResponse.json(body, { status });
   } catch (err: any) {
     return NextResponse.json(

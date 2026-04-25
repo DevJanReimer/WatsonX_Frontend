@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -13,24 +13,26 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white border-b border-abarxas-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-abarxas-700 to-abarxas-500 flex items-center justify-center">
-            <ShieldCheck className="text-white" size={20} />
-          </div>
+    <header className="bg-white border-b border-abraxas-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Abraxas "a" logomark — circle + vertical bar */}
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="18" r="10" stroke="#1a7280" strokeWidth="5" fill="none" />
+            <rect x="27" y="8" width="5" height="16" rx="1" fill="#1a7280" />
+          </svg>
           <div>
-            <div className="text-[11px] uppercase tracking-[0.15em] text-abarxas-500 leading-tight">
-              Abarxas
+            <div className="text-lg font-bold text-abraxas-700 leading-none tracking-tight">
+              abraxas
             </div>
-            <div className="font-semibold text-abarxas-900 leading-tight">
+            <div className="text-[11px] text-abraxas-400 leading-tight tracking-wide">
               ISDP Knowledge Agent
             </div>
           </div>
         </div>
         <button
           onClick={logout}
-          className="flex items-center gap-1.5 text-sm text-abarxas-600 hover:text-abarxas-900"
+          className="flex items-center gap-1.5 text-sm text-abraxas-500 hover:text-abraxas-700 transition-colors"
         >
           <LogOut size={16} />
           Sign out

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -38,23 +38,22 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-abarxas-800 via-abarxas-700 to-abarxas-500 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-abraxas-600 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-        <div className="flex items-center gap-2 mb-6">
-          <ShieldCheck className="text-abarxas-600" size={32} />
+        <div className="flex items-center gap-3 mb-8">
+          <svg width="40" height="40" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="18" r="10" stroke="#1a7280" strokeWidth="5" fill="none" />
+            <rect x="27" y="8" width="5" height="16" rx="1" fill="#1a7280" />
+          </svg>
           <div>
-            <div className="text-xs uppercase tracking-wider text-abarxas-500">
-              Abarxas
-            </div>
-            <h1 className="text-2xl font-bold text-abarxas-900">
-              ISDP Agent Sign-in
-            </h1>
+            <div className="text-xl font-bold text-abraxas-700 leading-none tracking-tight">abraxas</div>
+            <h1 className="text-sm text-abraxas-500 leading-tight">ISDP Agent Sign-in</h1>
           </div>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-abarxas-700 mb-1">
+            <label className="block text-sm font-medium text-abraxas-700 mb-1">
               Username
             </label>
             <input
@@ -63,12 +62,12 @@ export default function LoginForm() {
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-abarxas-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-abarxas-500"
+              className="w-full px-3 py-2 border border-abraxas-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-abraxas-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-abarxas-700 mb-1">
+            <label className="block text-sm font-medium text-abraxas-700 mb-1">
               Password
             </label>
             <input
@@ -76,7 +75,7 @@ export default function LoginForm() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-abarxas-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-abarxas-500"
+              className="w-full px-3 py-2 border border-abraxas-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-abraxas-500"
               required
             />
           </div>
@@ -90,15 +89,15 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-abarxas-600 hover:bg-abarxas-700 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-abraxas-600 hover:bg-abraxas-700 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-60"
           >
             <LogIn size={18} />
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
-        <p className="text-xs text-abarxas-500 mt-6 text-center">
-          Access restricted · Abarxas ISDP Knowledge Gathering Agent
+        <p className="text-xs text-abraxas-500 mt-6 text-center">
+          Access restricted · Abraxas ISDP Knowledge Gathering Agent
         </p>
       </div>
     </div>

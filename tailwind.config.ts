@@ -8,18 +8,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        abarxas: {
-          50:  "#f2f6fb",
-          100: "#e1ebf5",
-          200: "#c0d4e8",
-          300: "#8fb1d2",
-          400: "#5786b7",
-          500: "#2f639b",
-          600: "#214d7e",
-          700: "#1b3e66",
-          800: "#172f4f",
-          900: "#11243d"
-        }
+        abraxas: {
+          50:  "#f0fafa",
+          100: "#ccebee",
+          200: "#99d4d9",
+          300: "#4db5b8",
+          400: "#2d9aa0",
+          500: "#1a8490",
+          600: "#1a7280",
+          700: "#155f6b",
+          800: "#0f4d57",
+          900: "#0a3840"
+        },
+        "abraxas-accent": "#4db5b8"
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
