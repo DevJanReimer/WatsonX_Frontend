@@ -75,10 +75,10 @@ export default function DocumentUpload() {
           size={22}
         />
         <div className="text-sm font-medium text-abraxas-800">
-          Drop documents or click to upload
+          Dateien hierher ziehen oder auswählen
         </div>
         <div className="text-xs text-abraxas-500 mt-1">
-          PDF, DOCX, XLSX, PPTX, TXT · up to 25&nbsp;MB
+          PDF, DOCX, XLSX, PPTX, TXT · max. 25&nbsp;MB
         </div>
         <input
           ref={inputRef}

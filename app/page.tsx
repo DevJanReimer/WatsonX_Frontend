@@ -11,17 +11,17 @@ export default function HomePage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
         <section className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-abraxas-900">
-            ISDP Knowledge Gathering
+            ISDP Wissenserhebung
           </h1>
           <p className="text-abraxas-600 mt-1 max-w-2xl">
-            Ask the agent about information-security & data-protection
-            concepts, attach your own documents, and get grounded answers with
-            citations.
+            Stellen Sie dem Agenten Fragen zu Informationssicherheit und
+            Datenschutz, laden Sie eigene Dokumente hoch und erhalten Sie
+            fundierte Antworten mit Quellenangaben.
           </p>
         </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-          <div className="h-[calc(100vh-250px)] min-h-[520px]">
+          <div className="h-[calc(100vh-200px)] min-h-[600px]">
             <Chat />
           </div>
 
@@ -30,7 +30,7 @@ export default function HomePage() {
               <div className="flex items-center gap-2 mb-3">
                 <Database size={16} className="text-abraxas-600" />
                 <h2 className="font-semibold text-abraxas-900">
-                  Add to knowledge base
+                  Zur Wissensdatenbank hinzufügen
                 </h2>
               </div>
               <DocumentUpload />
@@ -40,20 +40,20 @@ export default function HomePage() {
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles size={16} className="text-abraxas-600" />
                 <h2 className="font-semibold text-abraxas-900">
-                  Try asking
+                  Beispielfragen
                 </h2>
               </div>
               <ul className="space-y-2 text-sm">
                 <li className="border border-abraxas-100 rounded-lg px-3 py-2 hover:border-abraxas-300 cursor-default">
-                  What are the key obligations under the Swiss FADP for
-                  processing health data?
+                  Welche Hauptpflichten gelten gemäss dem Schweizer DSG bei der
+                  Bearbeitung von Gesundheitsdaten?
                 </li>
                 <li className="border border-abraxas-100 rounded-lg px-3 py-2 hover:border-abraxas-300 cursor-default">
-                  Summarise the risk catalogue in the attached
-                  Risikoanalyse document.
+                  Fasse den Risikokatalog im beigefügten
+                  Risikoanalyse-Dokument zusammen.
                 </li>
                 <li className="border border-abraxas-100 rounded-lg px-3 py-2 hover:border-abraxas-300 cursor-default">
-                  Draft a data privacy sheet for a new telemedicine feature.
+                  Erstelle ein Datenschutzblatt für eine neue Telemedizin-Funktion.
                 </li>
               </ul>
             </section>
@@ -61,12 +61,12 @@ export default function HomePage() {
             <section className="bg-abraxas-50 border border-abraxas-200 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen size={16} className="text-abraxas-500" />
-                <h2 className="font-semibold text-abraxas-900">About this agent</h2>
+                <h2 className="font-semibold text-abraxas-900">Über diesen Agenten</h2>
               </div>
               <p className="text-sm text-abraxas-700 leading-relaxed">
-                Powered by IBM watsonx Orchestrate. Built for the Abraxas ISDP
-                workstream to accelerate information-security and
-                data-protection knowledge gathering.
+                Betrieben von IBM watsonx Orchestrate. Entwickelt für den Abraxas
+                ISDP-Workstream zur Beschleunigung der Wissenserhebung im Bereich
+                Informationssicherheit und Datenschutz.
               </p>
             </section>
           </aside>
@@ -74,8 +74,8 @@ export default function HomePage() {
       </main>
 
       <footer className="text-center text-xs text-abraxas-500 py-4">
-        © {new Date().getFullYear()} Abraxas · ISDP Knowledge Agent · Powered
-        by IBM watsonx Orchestrate
+        © {new Date().getFullYear()} Abraxas · ISDP Wissensagent · Betrieben
+        von IBM watsonx Orchestrate
       </footer>
     </div>
   );

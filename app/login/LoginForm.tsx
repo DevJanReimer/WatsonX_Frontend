@@ -47,14 +47,14 @@ export default function LoginForm() {
           </svg>
           <div>
             <div className="text-xl font-bold text-abraxas-700 leading-none tracking-tight">abraxas</div>
-            <h1 className="text-sm text-abraxas-500 leading-tight">ISDP Agent Sign-in</h1>
+            <h1 className="text-sm text-abraxas-500 leading-tight">ISDP Wissensagent · Anmeldung</h1>
           </div>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-abraxas-700 mb-1">
-              Username
+              Benutzername
             </label>
             <input
               type="text"
@@ -68,7 +68,7 @@ export default function LoginForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-abraxas-700 mb-1">
-              Password
+              Passwort
             </label>
             <input
               type="password"
@@ -92,12 +92,12 @@ export default function LoginForm() {
             className="w-full flex items-center justify-center gap-2 bg-abraxas-600 hover:bg-abraxas-700 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-60"
           >
             <LogIn size={18} />
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Wird angemeldet…" : "Anmelden"}
           </button>
         </form>
 
         <p className="text-xs text-abraxas-500 mt-6 text-center">
-          Access restricted · Abraxas ISDP Knowledge Gathering Agent
+          Zugang eingeschränkt · Abraxas ISDP Wissensagent
         </p>
       </div>
     </div>

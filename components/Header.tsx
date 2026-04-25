@@ -26,7 +26,7 @@ export default function Header() {
               abraxas
             </div>
             <div className="text-[11px] text-abraxas-400 leading-tight tracking-wide">
-              ISDP Knowledge Agent
+              ISDP Wissensagent
             </div>
           </div>
         </div>
@@ -35,7 +35,7 @@ export default function Header() {
           className="flex items-center gap-1.5 text-sm text-abraxas-500 hover:text-abraxas-700 transition-colors"
         >
           <LogOut size={16} />
-          Sign out
+          Abmelden
         </button>
       </div>
     </header>
