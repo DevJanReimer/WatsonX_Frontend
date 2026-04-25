@@ -167,8 +167,17 @@ export default function Chat() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-5">
-        {messages.map((m) => (
-          <ChatMessage key={m.id} message={m} />
+        {messages.map((m, i) => (
+          <ChatMessage
+            key={m.id}
+            message={m}
+            isLoading={
+              sending &&
+              i === messages.length - 1 &&
+              m.role === "assistant" &&
+              m.content === ""
+            }
+          />
         ))}
         {error && (
           <div className="my-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

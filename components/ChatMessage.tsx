@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -17,9 +18,49 @@ export interface Message {
 
 interface Props {
   message: Message;
+  isLoading?: boolean;
 }
 
-export default function ChatMessage({ message }: Props) {
+const LOADING_WORDS = [
+  "Abraxing",
+  "Securing",
+  "Orchestrating",
+  "Analysing",
+  "Synthesizing",
+  "Encrypting",
+  "Compliance-checking",
+  "Knowledge-mining",
+  "Vectorizing",
+  "Thinking",
+  "Processing",
+];
+
+function LoadingWords() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % LOADING_WORDS.length);
+        setVisible(true);
+      }, 300);
+    }, 1800);
+    return () => clearInterval(cycle);
+  }, []);
+
+  return (
+    <span
+      className="italic text-abraxas-500 transition-opacity duration-300"
+      style={{ opacity: visible ? 1 : 0 }}
+    >
+      {LOADING_WORDS[index]}…
+    </span>
+  );
+}
+
+export default function ChatMessage({ message, isLoading }: Props) {
   const isUser = message.role === "user";
 
   return (
@@ -54,12 +95,16 @@ export default function ChatMessage({ message }: Props) {
           </p>
         ) : (
           <div className="prose-chat text-[0.95rem]">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
-            >
-              {message.content || "…"}
-            </ReactMarkdown>
+            {isLoading ? (
+              <LoadingWords />
+            ) : (
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+              >
+                {message.content || "…"}
+              </ReactMarkdown>
+            )}
           </div>
         )}
 
