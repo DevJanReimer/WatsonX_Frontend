@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Chat from "@/components/Chat";
 import DocumentUpload from "@/components/DocumentUpload";
 import Header from "@/components/Header";

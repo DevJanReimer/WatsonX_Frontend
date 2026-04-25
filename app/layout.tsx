@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Abarxas ISDP Agent",
+  title: "Abraxas ISDP Wissensagent",
   description:
-    "Abarxas ISDP Knowledge Gathering Agent — powered by IBM watsonx Orchestrate"
+    "Abraxas ISDP Wissensagent — powered by IBM watsonx Orchestrate"
 };
 
 export default function RootLayout({
