@@ -1,6 +1,10 @@
-import { DataAPIClient } from "@datastax/astra-db-ts";
+import { DataAPIClient, Collection } from "@datastax/astra-db-ts";
 
-function getCollection() {
+let _collection: Collection | null = null;
+
+function getCollection(): Collection {
+  if (_collection) return _collection;
+
   const token = process.env.ASTRA_DB_APPLICATION_TOKEN;
   const endpoint = process.env.ASTRA_DB_API_ENDPOINT;
   const collectionName = process.env.ASTRA_DB_COLLECTION;
@@ -11,7 +15,8 @@ function getCollection() {
 
   const client = new DataAPIClient(token);
   const db = client.db(endpoint);
-  return db.collection(collectionName);
+  _collection = db.collection(collectionName);
+  return _collection;
 }
 
 export interface DocumentRecord {

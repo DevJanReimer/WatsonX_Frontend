@@ -76,13 +76,10 @@ export async function POST(req: NextRequest) {
         })
       );
 
-      try {
-        console.log(`[upload] saving ${records.length} document(s) to AstraDB`);
-        await saveDocuments(records);
-        console.log(`[upload] AstraDB save succeeded`);
-      } catch (dbErr: any) {
-        console.error("[upload] AstraDB save failed:", dbErr?.message, dbErr?.stack);
-      }
+      // Fire-and-forget — don't block the response on AstraDB latency
+      saveDocuments(records).catch((dbErr: any) =>
+        console.error("[upload] AstraDB save failed:", dbErr?.message)
+      );
     }
 
     if (files.length === 1) {

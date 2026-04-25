@@ -104,7 +104,7 @@ export default function Chat() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Chat failed (${res.status})`);
+        throw new Error(body.error || `Chat fehlgeschlagen (${res.status})`);
       }
 
       let accumulated = "";
@@ -159,7 +159,7 @@ export default function Chat() {
         <button
           onClick={reset}
           className="flex items-center gap-1.5 text-sm text-abraxas-600 hover:text-abraxas-900"
-          title="Reset conversation"
+          title="Gespräch zurücksetzen"
         >
           <RotateCcw size={14} />
           Zurücksetzen
@@ -194,7 +194,7 @@ export default function Chat() {
             onClick={send}
             disabled={sending || !input.trim()}
             className="flex-shrink-0 bg-abraxas-600 hover:bg-abraxas-700 disabled:opacity-50 text-white rounded-lg p-2 transition"
-            aria-label="Send"
+            aria-label="Senden"
           >
             {sending ? (
               <Loader2 size={18} className="animate-spin" />

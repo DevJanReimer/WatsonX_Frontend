@@ -146,3 +146,8 @@ export async function orchestrateUpload(
   }
   return { status: res.status, body };
 }
+
+// Eagerly warm up the IAM token so the first real request finds it cached.
+if (process.env.IBM_CLOUD_API_KEY) {
+  getBearerToken().catch(() => {});
+}

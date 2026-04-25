@@ -22,7 +22,7 @@ export default function DocumentUpload() {
       const res = await fetch("/api/upload", { method: "POST", body: form });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Upload failed (${res.status})`);
+        throw new Error(body.error || `Upload fehlgeschlagen (${res.status})`);
       }
       setFiles((prev) =>
         prev.map((f) => f.name === file.name ? { ...f, status: "done" } : f)
@@ -31,7 +31,7 @@ export default function DocumentUpload() {
       setFiles((prev) =>
         prev.map((f) =>
           f.name === file.name
-            ? { ...f, status: "error", error: err?.message ?? "Failed" }
+            ? { ...f, status: "error", error: err?.message ?? "Fehlgeschlagen" }
             : f
         )
       );
@@ -130,7 +130,7 @@ export default function DocumentUpload() {
                   setFiles((prev) => prev.filter((_, j) => j !== i))
                 }
                 className="text-abraxas-400 hover:text-abraxas-700"
-                aria-label="Remove"
+                aria-label="Entfernen"
               >
                 <X size={14} />
               </button>

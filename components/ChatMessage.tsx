@@ -66,7 +66,7 @@ export default function ChatMessage({ message }: Props) {
         {!isUser && message.sources && message.sources.length > 0 && (
           <div className="mt-3 pt-3 border-t border-abraxas-100">
             <div className="text-xs font-semibold uppercase tracking-wider text-abraxas-500 mb-2">
-              Sources
+              Quellen
             </div>
             <ul className="space-y-1">
               {message.sources.map((s, i) => (

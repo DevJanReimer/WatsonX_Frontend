@@ -26,12 +26,12 @@ export default function LoginForm() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Invalid credentials");
+        throw new Error(body.error || "Ungültige Anmeldedaten");
       }
       router.push(next);
       router.refresh();
     } catch (err: any) {
-      setError(err?.message ?? "Login failed");
+      setError(err?.message ?? "Anmeldung fehlgeschlagen");
     } finally {
       setLoading(false);
     }
