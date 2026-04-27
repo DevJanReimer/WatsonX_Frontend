@@ -19,17 +19,37 @@ function getCollection(): Collection {
   return _collection;
 }
 
-export interface DocumentRecord {
+export interface DocumentChunk {
   filename: string;
-  size: number;
   mimeType: string;
   uploadedAt: string;
-  content: string; // base64-encoded file bytes
-  watsonxDocumentId: string | null;
+  chunkIndex: number;
+  totalChunks: number;
+  content: string;
 }
 
-export async function saveDocuments(records: DocumentRecord[]): Promise<void> {
-  if (records.length === 0) return;
+const CHUNK_SIZE = 6000;
+
+export async function saveDocuments(
+  filename: string,
+  mimeType: string,
+  text: string
+): Promise<void> {
+  const uploadedAt = new Date().toISOString();
+  const chunks: DocumentChunk[] = [];
+
+  for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+    chunks.push({
+      filename,
+      mimeType,
+      uploadedAt,
+      chunkIndex: Math.floor(i / CHUNK_SIZE),
+      totalChunks: Math.ceil(text.length / CHUNK_SIZE),
+      content: text.slice(i, i + CHUNK_SIZE)
+    });
+  }
+
+  if (chunks.length === 0) return;
   const collection = getCollection();
-  await collection.insertMany(records);
+  await collection.insertMany(chunks);
 }
