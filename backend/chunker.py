@@ -57,6 +57,7 @@ COLLECTION_IMAGES = "isdp_images"
 DEFAULT_MAX_CHARS = 1400
 
 PLACEHOLDER_RE = re.compile(r"\[\[(TABLE|IMAGE):([^\]]+)\]\]")
+PAGE_RE = re.compile(r"\[\[PAGE:(\d+)\]\]")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -79,6 +80,15 @@ def _extract_asset_refs(text: str) -> tuple[list[str], list[str]]:
         else:
             images.append(asset_id)
     return tables, images
+
+
+def _extract_page_hint(text: str) -> int | None:
+    match = PAGE_RE.search(text)
+    return int(match.group(1)) if match else None
+
+
+def _strip_page_markers(text: str) -> str:
+    return PAGE_RE.sub("", text)
 
 
 def _safe_split(text: str, max_chars: int) -> list[str]:
@@ -225,14 +235,22 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def build_chunk_doc(chunk: RawChunk, source_doc: str, table_ids: list[str], image_ids: list[str]) -> dict:
+def build_chunk_doc(
+    chunk: RawChunk,
+    source_doc: str,
+    table_ids: list[str],
+    image_ids: list[str],
+    page: int | None = None,
+) -> dict:
+    clean_text = _strip_page_markers(chunk.text).strip()
     heading_prefix = " > ".join(chunk.heading_path) + "\n\n" if chunk.heading_path else ""
-    vectorize_text = heading_prefix + chunk.text
+    vectorize_text = heading_prefix + clean_text
+    page = page if page is not None else _extract_page_hint(chunk.text)
 
     return {
         "$vectorize":    vectorize_text,
         "$lexical":      vectorize_text,
-        "content":       chunk.text,
+        "content":       clean_text,
         "title":         " > ".join(chunk.heading_path) if chunk.heading_path else source_doc,
         "heading_path":  chunk.heading_path,
         "content_type":  "text",
@@ -240,6 +258,7 @@ def build_chunk_doc(chunk: RawChunk, source_doc: str, table_ids: list[str], imag
         "chunk_index":   chunk.chunk_index,
         "tables":        table_ids,   # IDs of tables referenced in this chunk
         "images":        image_ids,   # IDs of images referenced in this chunk
+        "page":          page,
         "ingested_at":   _now(),
     }
 
@@ -341,7 +360,20 @@ def process_json(
     chunk_docs = []
     for chunk in raw_chunks:
         tbl_ids, img_ids = _extract_asset_refs(chunk.text)
-        chunk_docs.append(build_chunk_doc(chunk, source_doc, tbl_ids, img_ids))
+
+        # Determine page for this chunk from referenced assets (first available)
+        page: int | None = _extract_page_hint(chunk.text)
+        for aid in tbl_ids + img_ids:
+            if page is not None:
+                break
+            meta = registry.get(aid)
+            if meta:
+                p = meta.get("page")
+                if p is not None:
+                    page = p
+                    break
+
+        chunk_docs.append(build_chunk_doc(chunk, source_doc, tbl_ids, img_ids, page=page))
 
     table_docs = [
         build_table_doc(aid, meta)

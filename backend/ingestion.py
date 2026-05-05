@@ -66,6 +66,13 @@ def is_inside_table(item, table_crefs: set[str]) -> bool:
     return cref in table_crefs
 
 
+def _item_page(item) -> int | None:
+    prov = getattr(item, "prov", None)
+    if not prov:
+        return None
+    return getattr(prov[0], "page_no", None)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Table rendering
 # ─────────────────────────────────────────────────────────────────────────────
@@ -259,6 +266,11 @@ def ingest(file_path: str, run_vision: bool = True, work_dir: Path | None = None
     current_heading = ""
 
     for item, level in doc.iterate_items():
+        page = _item_page(item)
+        print(f"[page] {page}")
+
+        if page is not None:
+            linear_parts.append(f"[[PAGE:{page}]]")
 
         # ── Heading ───────────────────────────────────────────────────────
         if isinstance(item, SectionHeaderItem):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import tempfile
 import threading
+import traceback
 import uuid
 from pathlib import Path
 
@@ -40,47 +41,76 @@ def _run_pipeline(job_id: str, files: list[Path], work_root: Path) -> None:
     job = jobs[job_id]
     job["status"] = "running"
 
+    def log(msg: str) -> None:
+        print(f"[job {job_id}] {msg}", flush=True)
+        job["log"].append(msg)
+
     try:
-        client      = DataAPIClient(os.environ["ASTRA_DB_APPLICATION_TOKEN"])
-        database    = client.get_database(os.environ["ASTRA_DB_API_ENDPOINT"])
+        # ── Step 0: connect to Astra ──────────────────────────────────────
+        log("Connecting to Astra DB...")
+        token    = os.environ.get("ASTRA_DB_APPLICATION_TOKEN", "")
+        endpoint = os.environ.get("ASTRA_DB_API_ENDPOINT", "")
+        if not token or not endpoint:
+            raise RuntimeError(
+                f"Missing env vars — "
+                f"ASTRA_DB_APPLICATION_TOKEN={'set' if token else 'MISSING'}, "
+                f"ASTRA_DB_API_ENDPOINT={'set' if endpoint else 'MISSING'}"
+            )
+        log(f"Astra endpoint: {endpoint}")
+
+        client      = DataAPIClient(token)
+        database    = client.get_database(endpoint)
+        log("Astra connected. Getting/creating collections...")
         collections = get_or_create_collections(database)
+        log(f"Collections ready: {list(collections.keys())}")
 
         total = len(files)
         for i, file_path in enumerate(files, 1):
             job["progress"] = f"[{i}/{total}] Ingesting {file_path.name}"
-            job["log"].append(f"[{i}/{total}] Starting {file_path.name}")
+            log(f"[{i}/{total}] Starting {file_path.name}  (size: {file_path.stat().st_size} bytes)")
 
             try:
-                # Step 1 — ingestion (no vision for speed; add run_vision=True if needed)
-                result   = ingest(str(file_path), run_vision=False,
-                                  work_dir=work_root / file_path.stem)
+                # Step 1 — docling extraction ─────────────────────────────
+                log(f"[{i}/{total}] Running docling on {file_path.name}...")
+                result    = ingest(str(file_path), run_vision=False,
+                                   work_dir=work_root / file_path.stem)
                 json_path = work_root / file_path.stem / f"{file_path.stem}_data.json"
+                log(f"[{i}/{total}] Extraction done — json at {json_path} (exists={json_path.exists()})")
 
-                # Step 2 — chunk + push to Astra
+                if not json_path.exists():
+                    raise FileNotFoundError(f"Expected {json_path} but file was not created")
+
+                # Step 2 — chunk + push to Astra ──────────────────────────
                 job["progress"] = f"[{i}/{total}] Chunking {file_path.name}"
+                log(f"[{i}/{total}] Chunking {file_path.name}...")
                 counts = process_json(
                     json_path=json_path,
                     collections=collections,
                     max_chars=1400,
                     dry_run=False,
                 )
-                job["log"].append(
+                log(
                     f"  ✓ {file_path.name}: "
                     f"{counts['chunks']} chunks, "
                     f"{counts['tables']} tables, "
                     f"{counts['images']} images"
                 )
             except Exception as e:
-                job["log"].append(f"  ✗ {file_path.name}: {e}")
+                tb = traceback.format_exc()
+                print(f"[job {job_id}] ✗ {file_path.name} FAILED:\n{tb}", flush=True)
+                log(f"  ✗ {file_path.name}: {type(e).__name__}: {e}")
 
         job["status"]   = "done"
         job["progress"] = f"Completed {total} file(s)"
+        log("Pipeline finished.")
 
     except Exception as e:
+        tb = traceback.format_exc()
+        print(f"[job {job_id}] Pipeline outer error:\n{tb}", flush=True)
         job["status"] = "error"
-        job["error"]  = str(e)
+        job["error"]  = f"{type(e).__name__}: {e}"
+        log(f"Fatal error: {type(e).__name__}: {e}")
     finally:
-        # Clean up temp folder
         shutil.rmtree(work_root, ignore_errors=True)
 
 
