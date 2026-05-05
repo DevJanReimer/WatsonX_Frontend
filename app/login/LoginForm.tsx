@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
 
 export default function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/";
 
@@ -28,8 +27,7 @@ export default function LoginForm() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "Ungültige Anmeldedaten");
       }
-      router.push(next);
-      router.refresh();
+      window.location.replace(next);
     } catch (err: any) {
       setError(err?.message ?? "Anmeldung fehlgeschlagen");
     } finally {

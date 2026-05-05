@@ -11,42 +11,80 @@ interface UploadedFile {
 }
 
 export default function DocumentUpload() {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<UploadedFile[]>([]);
+  const inputRef  = useRef<HTMLInputElement>(null);
+  const folderRef = useRef<HTMLInputElement>(null);
+  const [files,    setFiles]    = useState<UploadedFile[]>([]);
   const [dragOver, setDragOver] = useState(false);
-
-  async function uploadOne(file: File) {
-    const form = new FormData();
-    form.append("file", file);
-    try {
-      const res = await fetch("/api/upload", { method: "POST", body: form });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Upload fehlgeschlagen (${res.status})`);
-      }
-      setFiles((prev) =>
-        prev.map((f) => f.name === file.name ? { ...f, status: "done" } : f)
-      );
-    } catch (err: any) {
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.name === file.name
-            ? { ...f, status: "error", error: err?.message ?? "Fehlgeschlagen" }
-            : f
-        )
-      );
-    }
-  }
+  const [log,      setLog]      = useState<string[]>([]);
+  const [progress, setProgress] = useState("");
 
   async function handleFiles(list: FileList | null) {
     if (!list) return;
     const fileArray = Array.from(list);
-    // Mark all as uploading immediately, then upload in parallel
-    setFiles((prev) => [
+
+    setFiles(prev => [
       ...prev,
-      ...fileArray.map((f) => ({ name: f.name, status: "uploading" as const }))
+      ...fileArray.map(f => ({ name: f.name, status: "uploading" as const })),
     ]);
-    await Promise.all(fileArray.map(uploadOne));
+    setLog([]);
+    setProgress("Hochladen...");
+
+    try {
+      const form = new FormData();
+      fileArray.forEach(f => form.append("file", f));
+
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Fehler ${res.status}`);
+      }
+
+      const { job_id } = await res.json();
+      setProgress("Verarbeitung läuft...");
+
+      await new Promise<void>((resolve) => {
+        const interval = setInterval(async () => {
+          try {
+            const poll = await fetch(`/api/upload/status/${job_id}`);
+            const job  = await poll.json();
+
+            setLog(job.log ?? []);
+            setProgress(job.progress ?? "");
+
+            if (job.status === "done") {
+              clearInterval(interval);
+              setFiles(prev => prev.map(f =>
+                fileArray.find(u => u.name === f.name)
+                  ? { ...f, status: "done" }
+                  : f
+              ));
+              setProgress("✓ Alle Dokumente verarbeitet");
+              resolve();
+            } else if (job.status === "error") {
+              clearInterval(interval);
+              setFiles(prev => prev.map(f =>
+                fileArray.find(u => u.name === f.name)
+                  ? { ...f, status: "error", error: job.error ?? "Fehler" }
+                  : f
+              ));
+              setProgress(`Fehler: ${job.error}`);
+              resolve();
+            }
+          } catch {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 2000);
+      });
+
+    } catch (err: any) {
+      setFiles(prev => prev.map(f =>
+        fileArray.find(u => u.name === f.name)
+          ? { ...f, status: "error", error: err?.message ?? "Fehlgeschlagen" }
+          : f
+      ));
+      setProgress(`Fehler: ${err?.message}`);
+    }
   }
 
   return (
@@ -75,21 +113,43 @@ export default function DocumentUpload() {
           size={22}
         />
         <div className="text-sm font-medium text-abraxas-800">
-          Dateien hierher ziehen oder auswählen
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
+          >
+            Dateien auswählen
+          </button>
+          {" oder "}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); folderRef.current?.click(); }}
+          >
+            Ordner auswählen
+          </button>
         </div>
         <div className="text-xs text-abraxas-500 mt-1">
-          PDF, DOCX, XLSX, PPTX, TXT · max. 25&nbsp;MB
+          PDF, DOCX, DOC · max. 25&nbsp;MB
         </div>
+
+        {/* Pick individual files */}
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept=".pdf,.docx,.xlsx,.pptx,.txt,.md,.csv"
+          accept=".pdf,.docx,.doc"
           className="hidden"
-          onChange={(e) => {
-            handleFiles(e.target.files);
-            e.currentTarget.value = "";
-          }}
+          onChange={(e) => { handleFiles(e.target.files); e.currentTarget.value = ""; }}
+        />
+
+        {/* Pick entire folder */}
+        <input
+          ref={folderRef}
+          type="file"
+          multiple
+          // @ts-ignore — webkitdirectory not in TS types but works in all browsers
+          webkitdirectory=""
+          className="hidden"
+          onChange={(e) => { handleFiles(e.target.files); e.currentTarget.value = ""; }}
         />
       </div>
 
@@ -134,6 +194,20 @@ export default function DocumentUpload() {
               >
                 <X size={14} />
               </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {progress && (
+        <p className="text-xs text-abraxas-600 mt-2">{progress}</p>
+      )}
+      {log.length > 0 && (
+        <ul className="mt-2 text-xs font-mono bg-gray-50 border border-gray-200
+                       rounded-lg p-2 space-y-0.5 max-h-40 overflow-y-auto">
+          {log.map((line, i) => (
+            <li key={i} className={line.includes("✗") ? "text-red-600" : "text-gray-700"}>
+              {line}
             </li>
           ))}
         </ul>

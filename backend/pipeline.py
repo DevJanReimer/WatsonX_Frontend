@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
+from pathlib import Path
 
 from ingestion import ingest
 from chunker import (
@@ -32,7 +33,8 @@ SUPPORTED_EXTENSIONS = {".docx", ".doc", ".pdf", ".doc"}
 
 
 def main() -> int:
-    load_dotenv()
+    DOTENV_PATH = Path(__file__).resolve().parents[1] / "env.download"
+    load_dotenv(DOTENV_PATH)
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("folder", help="Folder containing documents to ingest")

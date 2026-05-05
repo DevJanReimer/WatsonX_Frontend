@@ -18,9 +18,11 @@ from chunker import process_json, get_or_create_collections
 
 from astrapy import DataAPIClient
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
-load_dotenv()
+DOTENV_PATH = Path(__file__).resolve().parents[1] / "env.download"
+load_dotenv(DOTENV_PATH)
 
 app = FastAPI(title="ISDP Ingestion API")
 

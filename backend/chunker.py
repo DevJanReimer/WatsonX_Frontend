@@ -42,6 +42,7 @@ from astrapy.info import (
     RerankServiceOptions,
 )
 from dotenv import load_dotenv
+from pathlib import Path
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -409,7 +410,8 @@ def process_json(
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main() -> int:
-    load_dotenv()
+    DOTENV_PATH = Path(__file__).resolve().parents[1] / "env.download"
+    load_dotenv(DOTENV_PATH)
 
     parser = argparse.ArgumentParser(
         description=__doc__,

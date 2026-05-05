@@ -35,6 +35,7 @@ from docling_core.types.doc import (
     TextItem,
 )
 from dotenv import load_dotenv
+from pathlib import Path
 from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import ModelInference
 
@@ -438,7 +439,8 @@ def ingest(file_path: str, run_vision: bool = True, work_dir: Path | None = None
 # ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    load_dotenv()
+    DOTENV_PATH = Path(__file__).resolve().parents[1] / "env.download"
+    load_dotenv(DOTENV_PATH)
 
     if len(sys.argv) < 2:
         print("Usage:")
