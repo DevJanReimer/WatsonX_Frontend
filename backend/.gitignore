@@ -1,0 +1,6 @@
+.env
+venv/
+.ingest_state.json
+__pycache__/
+.claude/
+tmp/
