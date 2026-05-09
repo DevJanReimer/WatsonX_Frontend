@@ -21,8 +21,9 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 
-DOTENV_PATH = Path(__file__).resolve().parents[1] / "env.download"
-load_dotenv(DOTENV_PATH)
+_root = Path(__file__).resolve().parents[1]
+load_dotenv(_root / "env.download")
+load_dotenv(_root / ".env.local", override=False)
 
 app = FastAPI(title="ISDP Ingestion API")
 
