@@ -40,12 +40,17 @@ async function* parseSSE(
 
       try {
         const json = JSON.parse(line);
+        const choice = json?.choices?.[0];
+        // Skip final summary events (finish_reason present) — they contain the
+        // full accumulated text in message.content which would duplicate the stream.
+        if (choice?.finish_reason != null) continue;
         const delta =
-          json?.choices?.[0]?.delta?.content ??
-          json?.choices?.[0]?.message?.content ??
-          json?.delta ??
-          json?.content ??
-          "";
+          "delta" in (choice ?? {})
+            ? (choice?.delta?.content ?? "")          // streaming chunk
+            : (choice?.message?.content               // non-streaming fallback
+                ?? json?.delta
+                ?? json?.content
+                ?? "");
         if (typeof delta === "string" && delta.length > 0) yield delta;
       } catch {
         // Not JSON — yield raw text

@@ -243,12 +243,15 @@ def build_chunk_doc(
     image_ids: list[str],
     page: int | None = None,
 ) -> dict:
+    import hashlib as _hashlib
     clean_text = _strip_page_markers(chunk.text).strip()
     heading_prefix = " > ".join(chunk.heading_path) + "\n\n" if chunk.heading_path else ""
     vectorize_text = heading_prefix + clean_text
     page = page if page is not None else _extract_page_hint(chunk.text)
+    chunk_id = _hashlib.sha1(f"{source_doc}::{chunk.chunk_index}".encode()).hexdigest()[:16]
 
     return {
+        "_id":           chunk_id,
         "$vectorize":    vectorize_text,
         "$lexical":      vectorize_text,
         "content":       clean_text,

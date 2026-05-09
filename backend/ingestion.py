@@ -25,7 +25,9 @@ from io import StringIO
 from pathlib import Path
 import tempfile
 
-from docling.document_converter import DocumentConverter
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling_core.types.doc import (
     DocItemLabel,
     ListItem,
@@ -232,12 +234,19 @@ def ingest(file_path: str, run_vision: bool = True, work_dir: Path | None = None
         work_dir.mkdir(parents=True, exist_ok=True)
 
     img_dir = work_dir / "images"
-    img_dir.mkdir(exist_ok=True)
+    img_dir.mkdir(parents=True, exist_ok=True)
     print(f"[tmp] Working directory: {work_dir}")
 
     # ── Docling conversion ────────────────────────────────────────────────
     print(f"[docling] Converting {path.name} ...")
-    converter = DocumentConverter()
+    pipeline_options = PdfPipelineOptions()
+    pipeline_options.do_ocr = False          # skip OCR; text-native PDFs are 10-20x faster
+    pipeline_options.do_table_structure = True
+    converter = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+        }
+    )
     result    = converter.convert(str(path))
     doc       = result.document
     print(f"[docling] Done — {len(doc.texts)} texts, "
@@ -407,6 +416,7 @@ def ingest(file_path: str, run_vision: bool = True, work_dir: Path | None = None
             w(f"  caption     : {meta.get('caption') or 'none'}")
             w(f"  description : {meta['description'] or 'NICHT_RELEVANT / not run'}")
 
+    work_dir.mkdir(parents=True, exist_ok=True)  # recreate if deleted during long conversion
     report_path = work_dir / f"{path.stem}_inspection.txt"
     report_path.write_text(report.getvalue(), encoding="utf-8")
 
