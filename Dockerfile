@@ -27,8 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Python dependencies
+# Python dependencies — install CPU-only torch first so docling doesn't pull the 2 GB GPU wheel
 COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Next.js standalone output
