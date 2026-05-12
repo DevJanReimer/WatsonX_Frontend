@@ -9,7 +9,7 @@ export async function GET(
 ) {
   const fastApiUrl = process.env.FASTAPI_URL ?? "http://localhost:8000";
   try {
-    const res = await fetch(`${fastApiUrl}/status/${params.job_id}`);
+    const res = await fetch(`${fastApiUrl}/status/${params.job_id}`, { cache: "no-store" });
     const data = await res.json().catch(() => ({ error: "Ungültige Antwort vom Backend" }));
     return NextResponse.json(data, { status: res.status });
   } catch (err: any) {

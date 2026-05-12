@@ -1,10 +1,15 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Paperclip, Loader2, CheckCircle2, AlertCircle, X, Eye, EyeOff } from "lucide-react";
+import { Paperclip, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 
+function uid() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 interface UploadedFile {
+  id: string;
   name: string;
   status: "uploading" | "done" | "error";
   error?: string;
@@ -13,21 +18,27 @@ interface UploadedFile {
 export default function DocumentUpload() {
   const inputRef  = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
-  const [files,       setFiles]      = useState<UploadedFile[]>([]);
-  const [doneNames,   setDoneNames]  = useState<Set<string>>(new Set());
-  const [dragOver,    setDragOver]   = useState(false);
-  const [log,         setLog]        = useState<string[]>([]);
-  const [progress,    setProgress]   = useState("");
-  const [runVision,   setRunVision]  = useState(false);
+  const [files,     setFiles]     = useState<UploadedFile[]>([]);
+  const [dragOver,  setDragOver]  = useState(false);
+  const [log,       setLog]       = useState<string[]>([]);
+  const [progress,  setProgress]  = useState("");
+  const [runVision, setRunVision] = useState(false);
 
   async function handleFiles(list: FileList | null) {
     if (!list) return;
     const fileArray = Array.from(list);
 
-    setFiles(prev => [
-      ...prev,
-      ...fileArray.map(f => ({ name: f.name, status: "uploading" as const })),
-    ]);
+    // Assign a stable ID to each file now — use this ID (not the name) for all status updates
+    const newEntries: UploadedFile[] = fileArray.map(f => ({
+      id: uid(),
+      name: f.name,
+      status: "uploading",
+    }));
+    const batchIds   = new Set(newEntries.map(e => e.id));
+    // Map filename → frontend ID so completed_files can mark individual files done
+    const nameToId   = new Map(newEntries.map(e => [e.name, e.id]));
+
+    setFiles(prev => [...prev, ...newEntries]);
     setLog([]);
     setProgress("Hochladen...");
 
@@ -43,50 +54,56 @@ export default function DocumentUpload() {
       }
 
       const { job_id } = await res.json();
-      setProgress("Verarbeitung läuft...");
+      setProgress("Verarbeitung läuft…");
 
-      await new Promise<void>((resolve) => {
-        const interval = setInterval(async () => {
-          try {
-            const poll = await fetch(`/api/upload/status/${job_id}`);
-            const job  = await poll.json();
-
-            setLog(job.log ?? []);
-            setProgress(job.progress ?? "");
-
-            // Update the set of completed file names on every poll.
-            const completed: string[] = job.completed_files ?? [];
-            if (completed.length > 0) {
-              setDoneNames(prev => new Set([...prev, ...completed]));
-            }
-
-            if (job.status === "done") {
-              clearInterval(interval);
-              setDoneNames(prev => new Set([...prev, ...completed]));
-              setProgress("✓ Alle Dokumente verarbeitet");
-              resolve();
-            } else if (job.status === "error") {
-              clearInterval(interval);
-              setFiles(prev => prev.map(f =>
-                fileArray.find(u => u.name === f.name) && !completed.includes(f.name)
-                  ? { ...f, status: "error", error: job.error ?? "Fehler" }
-                  : f
-              ));
-              setProgress(`Fehler: ${job.error}`);
-              resolve();
-            }
-          } catch {
-            clearInterval(interval);
-            resolve();
+      // Simple async polling loop — avoids setInterval/Promise interaction issues
+      const MAX_POLLS = 300; // 10 min at 2 s intervals
+      for (let tick = 1; tick <= MAX_POLLS; tick++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const poll = await fetch(`/api/upload/status/${job_id}?t=${tick}`, { cache: "no-store" });
+          if (!poll.ok) {
+            setProgress(`Warte auf Backend… (${tick})`);
+            continue;
           }
-        }, 2000);
-      });
+          const job = await poll.json();
+          setLog(job.log ?? []);
+          setProgress(job.progress ? `${job.progress} (${tick})` : `Verarbeitung läuft… (${tick})`);
+
+          // Mark each completed file individually as soon as the backend reports it
+          const completedIds = new Set(
+            (job.completed_files ?? [] as string[]).map((n: string) => nameToId.get(n)).filter(Boolean)
+          );
+          if (completedIds.size > 0) {
+            setFiles(prev => prev.map(f =>
+              completedIds.has(f.id) ? { ...f, status: "done" } : f
+            ));
+          }
+
+          if (job.status === "done") {
+            // Catch any files not yet marked (e.g. last batch)
+            setFiles(prev => prev.map(f =>
+              batchIds.has(f.id) ? { ...f, status: "done" } : f
+            ));
+            setProgress("✓ Alle Dokumente verarbeitet");
+            break;
+          } else if (job.status === "error") {
+            setFiles(prev => prev.map(f =>
+              batchIds.has(f.id) && f.status !== "done"
+                ? { ...f, status: "error", error: job.error ?? "Fehler" }
+                : f
+            ));
+            setProgress(`Fehler: ${job.error}`);
+            break;
+          }
+        } catch {
+          setProgress(`Netzwerkfehler beim Polling (${tick})`);
+        }
+      }
 
     } catch (err: any) {
       setFiles(prev => prev.map(f =>
-        fileArray.find(u => u.name === f.name)
-          ? { ...f, status: "error", error: err?.message ?? "Fehlgeschlagen" }
-          : f
+        batchIds.has(f.id) ? { ...f, status: "error", error: err?.message ?? "Fehlgeschlagen" } : f
       ));
       setProgress(`Fehler: ${err?.message}`);
     }
@@ -118,16 +135,9 @@ export default function DocumentUpload() {
       </button>
 
       <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          handleFiles(e.dataTransfer.files);
-        }}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
         onClick={() => inputRef.current?.click()}
         className={clsx(
           "border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition",
@@ -136,10 +146,7 @@ export default function DocumentUpload() {
             : "border-abraxas-200 hover:border-abraxas-400 bg-white"
         )}
       >
-        <Paperclip
-          className="mx-auto mb-2 text-abraxas-500"
-          size={22}
-        />
+        <Paperclip className="mx-auto mb-2 text-abraxas-500" size={22} />
         <div className="text-sm font-medium text-abraxas-800">
           <button
             type="button"
@@ -152,7 +159,6 @@ export default function DocumentUpload() {
           PDF, DOCX, DOC · max. 25&nbsp;MB
         </div>
 
-        {/* Pick individual files */}
         <input
           ref={inputRef}
           type="file"
@@ -161,13 +167,11 @@ export default function DocumentUpload() {
           className="hidden"
           onChange={(e) => { handleFiles(e.target.files); e.currentTarget.value = ""; }}
         />
-
-        {/* Pick entire folder */}
         <input
           ref={folderRef}
           type="file"
           multiple
-          // @ts-ignore — webkitdirectory not in TS types but works in all browsers
+          // @ts-ignore
           webkitdirectory=""
           className="hidden"
           onChange={(e) => { handleFiles(e.target.files); e.currentTarget.value = ""; }}
@@ -176,43 +180,22 @@ export default function DocumentUpload() {
 
       {files.length > 0 && (
         <ul className="space-y-1.5">
-          {files.map((f, i) => (
+          {files.map((f) => (
             <li
-              key={`${f.name}-${i}`}
+              key={f.id}
               className="flex items-center gap-2 text-sm bg-white border border-abraxas-100 rounded-lg px-3 py-2"
             >
-              {doneNames.has(f.name) ? (
-                <CheckCircle2
-                  size={14}
-                  className="text-emerald-600 flex-shrink-0"
-                />
+              {f.status === "done" ? (
+                <CheckCircle2 size={14} className="text-emerald-600 flex-shrink-0" />
               ) : f.status === "error" ? (
-                <AlertCircle
-                  size={14}
-                  className="text-red-600 flex-shrink-0"
-                />
+                <AlertCircle size={14} className="text-red-600 flex-shrink-0" />
               ) : (
-                <Loader2
-                  size={14}
-                  className="animate-spin text-abraxas-500 flex-shrink-0"
-                />
+                <Loader2 size={14} className="animate-spin text-abraxas-500 flex-shrink-0" />
               )}
-              <span className="flex-1 truncate text-abraxas-800">
-                {f.name}
-              </span>
+              <span className="flex-1 truncate text-abraxas-800">{f.name}</span>
               {f.status === "error" && f.error && (
-                <span className="text-xs text-red-600">{f.error}</span>
+                <span className="text-xs text-red-600 truncate max-w-[120px]">{f.error}</span>
               )}
-              <button
-                type="button"
-                onClick={() =>
-                  setFiles((prev) => prev.filter((_, j) => j !== i))
-                }
-                className="text-abraxas-400 hover:text-abraxas-700"
-                aria-label="Entfernen"
-              >
-                <X size={14} />
-              </button>
             </li>
           ))}
         </ul>
