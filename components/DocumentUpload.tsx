@@ -147,13 +147,6 @@ export default function DocumentUpload() {
           >
             Dateien auswählen
           </button>
-          {" oder "}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); folderRef.current?.click(); }}
-          >
-            Ordner auswählen
-          </button>
         </div>
         <div className="text-xs text-abraxas-500 mt-1">
           PDF, DOCX, DOC · max. 25&nbsp;MB
