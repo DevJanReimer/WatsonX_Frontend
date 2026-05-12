@@ -170,6 +170,31 @@ def get_status(job_id: str):
     return jobs[job_id]
 
 
+@app.post("/purge")
+def purge_collections():
+    """Drop all three ISDP collections from AstraDB."""
+    token    = os.environ.get("ASTRA_DB_APPLICATION_TOKEN", "")
+    endpoint = os.environ.get("ASTRA_DB_API_ENDPOINT", "")
+    if not token or not endpoint:
+        raise HTTPException(500, "AstraDB credentials not configured")
+
+    from astrapy import DataAPIClient
+    from chunker import COLLECTION_CHUNKS, COLLECTION_TABLES, COLLECTION_IMAGES
+
+    client   = DataAPIClient(token)
+    database = client.get_database(endpoint)
+    dropped  = []
+    for name in [COLLECTION_CHUNKS, COLLECTION_TABLES, COLLECTION_IMAGES]:
+        try:
+            database.drop_collection(name)
+            dropped.append(name)
+            print(f"[purge] Dropped: {name}")
+        except Exception as e:
+            print(f"[purge] Could not drop {name}: {e}")
+
+    return {"dropped": dropped}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
