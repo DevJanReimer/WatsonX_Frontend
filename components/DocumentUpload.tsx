@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Paperclip, Loader2, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Paperclip, Loader2, CheckCircle2, AlertCircle, X, Eye, EyeOff } from "lucide-react";
 import clsx from "clsx";
 
 interface UploadedFile {
@@ -13,10 +13,12 @@ interface UploadedFile {
 export default function DocumentUpload() {
   const inputRef  = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
-  const [files,    setFiles]    = useState<UploadedFile[]>([]);
-  const [dragOver, setDragOver] = useState(false);
-  const [log,      setLog]      = useState<string[]>([]);
-  const [progress, setProgress] = useState("");
+  const [files,       setFiles]      = useState<UploadedFile[]>([]);
+  const [doneNames,   setDoneNames]  = useState<Set<string>>(new Set());
+  const [dragOver,    setDragOver]   = useState(false);
+  const [log,         setLog]        = useState<string[]>([]);
+  const [progress,    setProgress]   = useState("");
+  const [runVision,   setRunVision]  = useState(false);
 
   async function handleFiles(list: FileList | null) {
     if (!list) return;
@@ -32,6 +34,7 @@ export default function DocumentUpload() {
     try {
       const form = new FormData();
       fileArray.forEach(f => form.append("file", f));
+      form.append("run_vision", String(runVision));
 
       const res = await fetch("/api/upload", { method: "POST", body: form });
       if (!res.ok) {
@@ -51,19 +54,21 @@ export default function DocumentUpload() {
             setLog(job.log ?? []);
             setProgress(job.progress ?? "");
 
+            // Update the set of completed file names on every poll.
+            const completed: string[] = job.completed_files ?? [];
+            if (completed.length > 0) {
+              setDoneNames(prev => new Set([...prev, ...completed]));
+            }
+
             if (job.status === "done") {
               clearInterval(interval);
-              setFiles(prev => prev.map(f =>
-                fileArray.find(u => u.name === f.name)
-                  ? { ...f, status: "done" }
-                  : f
-              ));
+              setDoneNames(prev => new Set([...prev, ...completed]));
               setProgress("✓ Alle Dokumente verarbeitet");
               resolve();
             } else if (job.status === "error") {
               clearInterval(interval);
               setFiles(prev => prev.map(f =>
-                fileArray.find(u => u.name === f.name)
+                fileArray.find(u => u.name === f.name) && !completed.includes(f.name)
                   ? { ...f, status: "error", error: job.error ?? "Fehler" }
                   : f
               ));
@@ -89,6 +94,29 @@ export default function DocumentUpload() {
 
   return (
     <div className="space-y-3">
+      {/* Vision toggle */}
+      <button
+        type="button"
+        onClick={() => setRunVision(v => !v)}
+        className={clsx(
+          "flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border transition w-full justify-between",
+          runVision
+            ? "bg-abraxas-50 border-abraxas-400 text-abraxas-800"
+            : "bg-white border-abraxas-200 text-abraxas-500"
+        )}
+      >
+        <span className="flex items-center gap-1.5">
+          {runVision ? <Eye size={13} /> : <EyeOff size={13} />}
+          Bildbeschreibung (VLM)
+        </span>
+        <span className={clsx(
+          "text-[10px] font-medium px-1.5 py-0.5 rounded",
+          runVision ? "bg-abraxas-500 text-white" : "bg-abraxas-100 text-abraxas-400"
+        )}>
+          {runVision ? "AN" : "AUS"}
+        </span>
+      </button>
+
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -160,22 +188,20 @@ export default function DocumentUpload() {
               key={`${f.name}-${i}`}
               className="flex items-center gap-2 text-sm bg-white border border-abraxas-100 rounded-lg px-3 py-2"
             >
-              {f.status === "uploading" && (
-                <Loader2
-                  size={14}
-                  className="animate-spin text-abraxas-500 flex-shrink-0"
-                />
-              )}
-              {f.status === "done" && (
+              {doneNames.has(f.name) ? (
                 <CheckCircle2
                   size={14}
                   className="text-emerald-600 flex-shrink-0"
                 />
-              )}
-              {f.status === "error" && (
+              ) : f.status === "error" ? (
                 <AlertCircle
                   size={14}
                   className="text-red-600 flex-shrink-0"
+                />
+              ) : (
+                <Loader2
+                  size={14}
+                  className="animate-spin text-abraxas-500 flex-shrink-0"
                 />
               )}
               <span className="flex-1 truncate text-abraxas-800">

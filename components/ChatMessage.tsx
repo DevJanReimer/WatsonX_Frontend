@@ -102,7 +102,7 @@ export default function ChatMessage({ message, isLoading }: Props) {
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeHighlight]}
               >
-                {message.content || "…"}
+                {(message.content || "…").replace(/<br\s*\/?>/gi, "\n")}
               </ReactMarkdown>
             )}
           </div>

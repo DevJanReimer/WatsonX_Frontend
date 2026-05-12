@@ -61,7 +61,12 @@ async function* parseSSE(
   }
 }
 
-export default function Chat() {
+interface ChatProps {
+  pendingPrompt?: string;
+  promptKey?: number;
+}
+
+export default function Chat({ pendingPrompt, promptKey }: ChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uid(),
@@ -81,6 +86,15 @@ export default function Chat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Fill input when a example question is selected from the sidebar.
+  // promptKey changes on every click so the same question can be re-inserted.
+  useEffect(() => {
+    if (pendingPrompt) {
+      setInput(pendingPrompt);
+      textareaRef.current?.focus();
+    }
+  }, [promptKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function send() {
     const content = input.trim();

@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `${file.name}: Nicht unterstützter Dateityp.` }, { status: 400 });
     }
 
+    const runVision = form.get("run_vision") === "true";
+
     const fastApiUrl = process.env.FASTAPI_URL ?? "http://localhost:8000";
     const upstream = new FormData();
     for (const file of files) {
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
       const blob = new Blob([bytes], { type: file.type });
       upstream.append("files", blob, file.name);
     }
+    upstream.append("run_vision", String(runVision));
 
     const res = await fetch(`${fastApiUrl}/ingest`, { method: "POST", body: upstream });
     const data = await res.json().catch(() => ({ error: "Ungültige Antwort vom Backend" }));
