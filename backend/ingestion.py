@@ -183,6 +183,20 @@ def describe_image(model: ModelInference, image_path: Path, heading_context: str
 # Main extraction
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _build_converter() -> DocumentConverter:
+    pipeline_options = PdfPipelineOptions()
+    pipeline_options.do_ocr = False
+    pipeline_options.do_table_structure = True
+    return DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+        }
+    )
+
+# Loaded once when this module is first imported — reused for every ingest() call.
+_CONVERTER: DocumentConverter = _build_converter()
+
+
 def ingest(file_path: str, run_vision: bool = True, work_dir: Path | None = None) -> dict:
     """
     Extract a document into linear text + asset registry.
@@ -239,15 +253,7 @@ def ingest(file_path: str, run_vision: bool = True, work_dir: Path | None = None
 
     # ── Docling conversion ────────────────────────────────────────────────
     print(f"[docling] Converting {path.name} ...")
-    pipeline_options = PdfPipelineOptions()
-    pipeline_options.do_ocr = False          # skip OCR; text-native PDFs are 10-20x faster
-    pipeline_options.do_table_structure = True
-    converter = DocumentConverter(
-        format_options={
-            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
-        }
-    )
-    result    = converter.convert(str(path))
+    result = _CONVERTER.convert(str(path))
     doc       = result.document
     print(f"[docling] Done — {len(doc.texts)} texts, "
           f"{len(doc.tables)} tables, {len(doc.pictures)} images")

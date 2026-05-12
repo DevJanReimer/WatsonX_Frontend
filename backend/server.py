@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -39,7 +39,7 @@ app.add_middleware(
 jobs: dict[str, dict] = {}
 
 
-def _run_pipeline(job_id: str, files: list[Path], work_root: Path) -> None:
+def _run_pipeline(job_id: str, files: list[Path], work_root: Path, run_vision: bool = False) -> None:
     """Runs in a background thread — ingestion + chunking per file."""
     job = jobs[job_id]
     job["status"] = "running"
@@ -75,7 +75,7 @@ def _run_pipeline(job_id: str, files: list[Path], work_root: Path) -> None:
             try:
                 # Step 1 — docling extraction ─────────────────────────────
                 log(f"[{i}/{total}] Running docling on {file_path.name}...")
-                result    = ingest(str(file_path), run_vision=False,
+                result    = ingest(str(file_path), run_vision=run_vision,
                                    work_dir=work_root / file_path.stem)
                 json_path = work_root / file_path.stem / f"{file_path.stem}_data.json"
                 log(f"[{i}/{total}] Extraction done — json at {json_path} (exists={json_path.exists()})")
@@ -98,6 +98,7 @@ def _run_pipeline(job_id: str, files: list[Path], work_root: Path) -> None:
                     f"{counts['tables']} tables, "
                     f"{counts['images']} images"
                 )
+                job["completed_files"].append(file_path.name)
             except Exception as e:
                 tb = traceback.format_exc()
                 print(f"[job {job_id}] ✗ {file_path.name} FAILED:\n{tb}", flush=True)
@@ -118,7 +119,10 @@ def _run_pipeline(job_id: str, files: list[Path], work_root: Path) -> None:
 
 
 @app.post("/ingest")
-async def ingest_files(files: list[UploadFile] = File(...)):
+async def ingest_files(
+    files: list[UploadFile] = File(...),
+    run_vision: bool = Form(False),
+):
     """
     Accept one or more document uploads, run the full pipeline.
     Returns a job_id to poll for status.
@@ -139,17 +143,18 @@ async def ingest_files(files: list[UploadFile] = File(...)):
 
     # Register job
     jobs[job_id] = {
-        "status":   "queued",
-        "progress": "Queued",
-        "files":    [f.name for f in saved],
-        "log":      [],
-        "error":    None,
+        "status":          "queued",
+        "progress":        "Queued",
+        "files":           [f.name for f in saved],
+        "completed_files": [],
+        "log":             [],
+        "error":           None,
     }
 
     # Run in background thread so the HTTP response returns immediately
     thread = threading.Thread(
         target=_run_pipeline,
-        args=(job_id, saved, work_root),
+        args=(job_id, saved, work_root, run_vision),
         daemon=True,
     )
     thread.start()

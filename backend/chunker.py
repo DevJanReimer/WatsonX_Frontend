@@ -220,7 +220,18 @@ def get_or_create_collections(database) -> dict:
     ]:
         if name not in existing:
             print(f"[astra] Creating collection: {name}")
-            database.create_collection(name, definition=def_fn())
+            try:
+                database.create_collection(name, definition=def_fn())
+            except Exception as exc:
+                # AstraDB may time out but still create the collection.
+                # Re-check before propagating the error.
+                existing_now = {c.name for c in database.list_collections()}
+                if name in existing_now:
+                    print(f"[astra] Collection {name} exists after timeout — continuing")
+                else:
+                    raise RuntimeError(
+                        f"Failed to create collection '{name}': {exc}"
+                    ) from exc
         else:
             print(f"[astra] Collection exists:   {name}")
         collections[name] = database.get_collection(name)
